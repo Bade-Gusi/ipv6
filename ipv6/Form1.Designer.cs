@@ -33,7 +33,7 @@ partial class Form1
 
     const int TITLEBAR_HEIGHT = 44;
     const int CORNER_RADIUS = 10;
-    const string GITHUB_REPO = "BadeGusi/ipv6";
+    const string GITHUB_REPO = "Bade-Gusi/ipv6";
     const string CURRENT_VERSION = "v2.0";
 
     [System.Runtime.InteropServices.DllImport("gdi32.dll")]
