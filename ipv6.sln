@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36401.2 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ipv6", "ipv6\ipv6.csproj", "{B93A2B7B-E942-4BAB-8AD8-F1DF98DE80B1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B93A2B7B-E942-4BAB-8AD8-F1DF98DE80B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B93A2B7B-E942-4BAB-8AD8-F1DF98DE80B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B93A2B7B-E942-4BAB-8AD8-F1DF98DE80B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B93A2B7B-E942-4BAB-8AD8-F1DF98DE80B1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D79CF136-3EBD-491E-B231-C5E16E6AC783}
+	EndGlobalSection
+EndGlobal
