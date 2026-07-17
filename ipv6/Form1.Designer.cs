@@ -4,7 +4,6 @@
 
 #nullable disable
 
-using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace ipv6;
@@ -320,24 +319,6 @@ partial class Form1
         this.btnUpdate.TextAlign = ContentAlignment.MiddleCenter;
 
         this.contentPanel.BackColor = Color.FromArgb(13, 17, 23);
-        this.contentPanel.Paint += (s, e) =>
-        {
-            // 环境光晕：右上蓝色辉光
-            using var blueGlow = new System.Drawing.Drawing2D.GraphicsPath();
-            blueGlow.AddEllipse(contentPanel.Width - 300, -100, 400, 400);
-            using var blueBrush = new PathGradientBrush(blueGlow);
-            blueBrush.CenterColor = Color.FromArgb(20, 88, 166, 255);
-            blueBrush.SurroundColors = new[] { Color.FromArgb(0, 88, 166, 255) };
-            e.Graphics.FillEllipse(blueBrush, contentPanel.Width - 300, -100, 400, 400);
-
-            // 左下紫色光晕
-            using var purpleGlow = new System.Drawing.Drawing2D.GraphicsPath();
-            purpleGlow.AddEllipse(-100, contentPanel.Height - 250, 350, 350);
-            using var purpleBrush = new PathGradientBrush(purpleGlow);
-            purpleBrush.CenterColor = Color.FromArgb(15, 170, 120, 255);
-            purpleBrush.SurroundColors = new[] { Color.FromArgb(0, 170, 120, 255) };
-            e.Graphics.FillEllipse(purpleBrush, -100, contentPanel.Height - 250, 350, 350);
-        };
     }
 
     // ============================================================
@@ -373,53 +354,31 @@ partial class Form1
         foreach (TileDef t in tiles)
         {
             Color tileColor = t.Color;
-            bool hovered = false;
+            int pageIdx = t.PageIndex;
 
             Panel card = new Panel
             {
-                Size = new Size(240, 76),
-                BackColor = Color.FromArgb(170, 28, 33, 40),
+                Size = new Size(230, 66),
+                BackColor = BG_CARD,
                 Margin = new Padding(0, 0, 10, 10),
-                Cursor = Cursors.Hand,
-                Tag = t.PageIndex
+                Cursor = Cursors.Hand
             };
             card.Paint += (s, e) =>
             {
-                if (hovered)
-                {
-                    // hover 辉光
-                    using Pen glow1 = new Pen(Color.FromArgb(120, tileColor), 3);
-                    e.Graphics.DrawRectangle(glow1, 0, 0, 239, 75);
-                    using Pen glow2 = new Pen(Color.FromArgb(60, tileColor), 6);
-                    e.Graphics.DrawRectangle(glow2, 0, 0, 239, 75);
-                    // 左边框发光
-                    using Pen leftGlow = new Pen(Color.FromArgb(255, tileColor), 3);
-                    e.Graphics.DrawLine(leftGlow, 0, 0, 0, 76);
-                }
-                else
-                {
-                    using Pen border = new Pen(Color.FromArgb(180, tileColor), 2);
-                    e.Graphics.DrawLine(border, 0, 0, 0, 76);
-                    using Pen outline = new Pen(Color.FromArgb(40, tileColor));
-                    e.Graphics.DrawRectangle(outline, 1, 1, 238, 74);
-                }
-                using Pen top = new Pen(Color.FromArgb(25, 255, 255, 255));
-                e.Graphics.DrawLine(top, 5, 2, 235, 2);
+                using Pen left = new Pen(tileColor, 3);
+                e.Graphics.DrawLine(left, 0, 0, 0, 66);
             };
-            card.MouseEnter += (s, e) => { hovered = true; card.BackColor = Color.FromArgb(210, 38, 44, 52); card.Invalidate(); };
-            card.MouseLeave += (s, e) => { hovered = false; card.BackColor = Color.FromArgb(170, 28, 33, 40); card.Invalidate(); };
+            card.MouseEnter += (s, e) => card.BackColor = BG_HOVER;
+            card.MouseLeave += (s, e) => card.BackColor = BG_CARD;
+            card.Click += (s, e) => SwitchToDetail(pageIdx);
 
-            int idx = t.PageIndex;
-            card.Click += (s, e) => SwitchToDetail(idx);
+            Label iconLbl = new Label { Text = t.Icon, Location = new Point(12, 12), AutoSize = true, Font = new Font("Segoe UI", 16F) };
+            Label titleLbl = new Label { Text = t.Title, Location = new Point(48, 12), AutoSize = true, Font = new Font("Segoe UI", 10F, FontStyle.Bold), ForeColor = TEXT_PRIMARY };
+            Label descLbl = new Label { Text = t.Desc, Location = new Point(48, 34), AutoSize = true, Font = new Font("Segoe UI", 8F), ForeColor = TEXT_SECONDARY };
 
-            Label iconLbl = new Label { Text = t.Icon, Location = new Point(14, 12), AutoSize = true, Font = new Font("Segoe UI", 18F) };
-            Label titleLbl = new Label { Text = t.Title, Location = new Point(52, 14), AutoSize = true, Font = new Font("Segoe UI", 11F, FontStyle.Bold), ForeColor = TEXT_PRIMARY };
-            Label descLbl = new Label { Text = t.Desc, Location = new Point(52, 36), AutoSize = true, Font = new Font("Segoe UI", 8.5F), ForeColor = TEXT_SECONDARY };
-            Label accentLine = new Label { Text = "", Location = new Point(0, 0), Width = 3, Height = 72, BackColor = t.Color };
-
-            foreach (Control c in new Control[] { iconLbl, titleLbl, descLbl, accentLine })
+            foreach (Control c in new Control[] { iconLbl, titleLbl, descLbl })
             {
-                c.Click += (s, e) => SwitchToDetail(idx);
+                c.Click += (s, e) => SwitchToDetail(pageIdx);
                 card.Controls.Add(c);
             }
 

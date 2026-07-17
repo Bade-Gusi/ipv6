@@ -256,7 +256,7 @@ public partial class Form1 : Form
     }
 
     // ============================================================
-    // 我的 IPv6 地址展示（毛玻璃卡片 + 复制 + 入场动画）
+    // 我的 IPv6 地址展示
     // ============================================================
     private async Task PopulateMyIPv6AddressesAsync()
     {
@@ -270,123 +270,56 @@ public partial class Form1 : Form
             if (myIPv6Container.InvokeRequired) { myIPv6Container.BeginInvoke(new Action(async () => await PopulateMyIPv6AddressesAsync())); return; }
 
             myIPv6Container.Controls.Clear();
-            int added = 0;
 
             foreach (var a in myIPs)
             {
                 Color typeColor = a.Type switch
                 {
-                    "全局单播" => ACCENT_BLUE,
-                    "唯一本地" => ACCENT_PURPLE,
-                    "链路本地" => ACCENT_CYAN,
-                    "回环" => TEXT_MUTED,
-                    "多播" => ACCENT_ORANGE,
-                    "6to4" => ACCENT_GREEN,
-                    "站点本地" => ACCENT_YELLOW,
-                    _ => ACCENT_GREEN
+                    "全局单播" => ACCENT_BLUE, "唯一本地" => ACCENT_PURPLE,
+                    "链路本地" => ACCENT_CYAN, "回环" => TEXT_MUTED,
+                    "多播" => ACCENT_ORANGE, _ => ACCENT_GREEN
                 };
 
-                var card = new Panel
+                Panel card = new Panel
                 {
-                    Size = new Size(300, 66),
-                    BackColor = Color.FromArgb(180, 28, 33, 40),
-                    Margin = new Padding(0, 2, 10, 2),
-                    Cursor = Cursors.Hand,
-                    Tag = a.IP
-                };
-                card.Paint += (s, e) =>
-                {
-                    using Pen c = new Pen(Color.FromArgb(120, typeColor), 1);
-                    e.Graphics.DrawRectangle(c, 0, 0, 299, 65);
-                    using Pen left = new Pen(typeColor, 2);
-                    e.Graphics.DrawLine(left, 0, 0, 0, 66);
-                };
-                card.MouseEnter += (s, e) => card.BackColor = Color.FromArgb(220, 38, 44, 52);
-                card.MouseLeave += (s, e) => card.BackColor = Color.FromArgb(180, 28, 33, 40);
-                card.Click += (s, e) =>
-                {
-                    Clipboard.SetText(a.IP);
-                    AddLog($"📋 已复制 IPv6: {a.IP}");
-                };
-
-                // 类型标签 + 复制提示
-                Panel topBar = new Panel { Height = 20, Dock = DockStyle.Top, BackColor = Color.Transparent };
-                topBar.Controls.Add(new Label { Text = a.Type, Location = new Point(10, 2), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = typeColor });
-                topBar.Controls.Add(new Label { Text = "\U0001f4cb", Location = new Point(265, 2), AutoSize = true, Font = new Font("Segoe UI", 9F), ForeColor = Color.FromArgb(120, 139, 148, 158) });
-                card.Controls.Add(topBar);
-
-                // IP 地址
-                card.Controls.Add(new Label { Text = a.IP, Location = new Point(10, 22), AutoSize = true, Font = new Font("Consolas", 10F, FontStyle.Bold), ForeColor = TEXT_PRIMARY });
-
-                // 前缀 + 接口 + 状态
-                card.Controls.Add(new Label
-                {
-                    Text = $"/{a.PrefixLen}  {a.Interface.Truncate(20)}  •  {a.State}",
-                    Location = new Point(10, 44),
-                    AutoSize = true,
-                    Font = new Font("Segoe UI", 7.5F),
-                    ForeColor = Color.FromArgb(160, 139, 148, 158)
-                });
-
-                myIPv6Container.Controls.Add(card);
-                added++;
-            }
-
-            // 默认网关卡片
-            foreach (var gw in gateways)
-            {
-                Panel gwCard = new Panel
-                {
-                    Size = new Size(260, 66),
-                    BackColor = Color.FromArgb(170, 28, 33, 40),
+                    Size = new Size(290, 60),
+                    BackColor = BG_CARD,
                     Margin = new Padding(0, 2, 10, 2),
                     Cursor = Cursors.Hand
                 };
-                gwCard.Paint += (s, e) =>
+                card.Paint += (s, e) =>
                 {
-                    using Pen c = new Pen(Color.FromArgb(120, ACCENT_ORANGE), 1);
-                    e.Graphics.DrawRectangle(c, 0, 0, 259, 65);
-                    using Pen left = new Pen(ACCENT_ORANGE, 2);
-                    e.Graphics.DrawLine(left, 0, 0, 0, 66);
+                    using Pen left = new Pen(typeColor, 3);
+                    e.Graphics.DrawLine(left, 0, 0, 0, 60);
                 };
-                gwCard.MouseEnter += (s, e) => gwCard.BackColor = Color.FromArgb(220, 38, 44, 52);
-                gwCard.MouseLeave += (s, e) => gwCard.BackColor = Color.FromArgb(170, 28, 33, 40);
-                gwCard.Click += (s, e) => { Clipboard.SetText(gw.Gateway); AddLog($"📋 已复制网关: {gw.Gateway}"); };
+                card.MouseEnter += (s, e) => card.BackColor = BG_HOVER;
+                card.MouseLeave += (s, e) => card.BackColor = BG_CARD;
+                card.Click += (s, e) => { Clipboard.SetText(a.IP); AddLog($"📋 已复制: {a.IP}"); };
 
-                gwCard.Controls.Add(new Label { Text = "默认网关", Location = new Point(10, 4), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = ACCENT_ORANGE });
-                gwCard.Controls.Add(new Label { Text = gw.Gateway, Location = new Point(10, 22), AutoSize = true, Font = new Font("Consolas", 10F, FontStyle.Bold), ForeColor = TEXT_PRIMARY });
-                gwCard.Controls.Add(new Label { Text = gw.Interface.Truncate(24), Location = new Point(10, 44), AutoSize = true, Font = new Font("Segoe UI", 7.5F), ForeColor = Color.FromArgb(160, 139, 148, 158) });
+                card.Controls.Add(new Label { Text = a.Type, Location = new Point(12, 5), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = typeColor });
+                card.Controls.Add(new Label { Text = a.IP, Location = new Point(12, 20), AutoSize = true, Font = new Font("Consolas", 9.5F, FontStyle.Bold), ForeColor = TEXT_PRIMARY });
+                card.Controls.Add(new Label { Text = $"/{a.PrefixLen}  {a.Interface.Truncate(18)}  {a.State}", Location = new Point(12, 40), AutoSize = true, Font = new Font("Segoe UI", 7.5F), ForeColor = TEXT_SECONDARY });
 
-                myIPv6Container.Controls.Add(gwCard);
+                myIPv6Container.Controls.Add(card);
             }
 
-            // 空状态
-            if (added == 0 && myIPv6Container.Controls.Count == 0)
+            // 网关
+            foreach (var gw in gateways)
             {
-                myIPv6Container.Controls.Add(new Label
-                {
-                    Text = "  ⚠ 未检测到 IPv6 地址",
-                    AutoSize = true,
-                    Font = new Font("Segoe UI", 11F),
-                    ForeColor = TEXT_MUTED,
-                    Margin = new Padding(10, 10, 0, 0)
-                });
+                Panel gc = new Panel { Size = new Size(250, 60), BackColor = BG_CARD, Margin = new Padding(0, 2, 10, 2), Cursor = Cursors.Hand };
+                gc.Paint += (s, e) => { using Pen p = new Pen(ACCENT_ORANGE, 3); e.Graphics.DrawLine(p, 0, 0, 0, 60); };
+                gc.MouseEnter += (s, e) => gc.BackColor = BG_HOVER;
+                gc.MouseLeave += (s, e) => gc.BackColor = BG_CARD;
+                gc.Click += (s, e) => { Clipboard.SetText(gw.Gateway); AddLog($"📋 已复制: {gw.Gateway}"); };
+                gc.Controls.Add(new Label { Text = "默认网关", Location = new Point(12, 5), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = ACCENT_ORANGE });
+                gc.Controls.Add(new Label { Text = gw.Gateway, Location = new Point(12, 20), AutoSize = true, Font = new Font("Consolas", 9.5F, FontStyle.Bold), ForeColor = TEXT_PRIMARY });
+                gc.Controls.Add(new Label { Text = gw.Interface.Truncate(24), Location = new Point(12, 40), AutoSize = true, Font = new Font("Segoe UI", 7.5F), ForeColor = TEXT_SECONDARY });
+                myIPv6Container.Controls.Add(gc);
             }
 
-            // 入场动画：卡片依次淡入滑上
-            int idx = 0;
-            foreach (Control c in myIPv6Container.Controls)
+            if (myIPs.Count == 0 && myIPv6Container.Controls.Count == 0)
             {
-                if (c is Panel p)
-                {
-                    int originTop = p.Top;
-                    p.Top += 15;
-                    int targetTop = originTop;
-                    int delay = idx * 40;
-                    int cur = idx;
-                    _ = AnimateSlide(p, originTop + 15, targetTop, delay);
-                    idx++;
-                }
+                myIPv6Container.Controls.Add(new Label { Text = "  ⚠ 未检测到 IPv6 地址", AutoSize = true, Font = new Font("Segoe UI", 11F), ForeColor = TEXT_MUTED, Margin = new Padding(10, 10, 0, 0) });
             }
         }
         catch (Exception ex)
