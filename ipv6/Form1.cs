@@ -119,12 +119,13 @@ public partial class Form1 : Form
             contentPanel.Controls.Remove(currentDetail);
 
         Panel dp = detailPages[index];
-        // 手动铺满内容区（不用 Dock=Fill，为了动画能控制 Location）
-        dp.Size = contentPanel.ClientSize;
+        // 铺满内容区（使用 DisplayRectangle 适应 Padding）
+        Rectangle area = contentPanel.DisplayRectangle;
+        dp.Size = area.Size;
         dp.Visible = true;
 
-        int w = dp.Width;
-        dp.Location = new Point(w, 0);
+        int w = area.Width;
+        dp.Location = new Point(area.X + w, area.Y);
         contentPanel.Controls.Add(dp);
         dp.BringToFront();
         currentDetail = dp;
@@ -207,11 +208,8 @@ public partial class Form1 : Form
         this.Opacity = 1;
 
         _ = _data.RefreshAllAsync(s => { if (dashEventLog != null && !dashEventLog.IsDisposed) dashEventLog.BeginInvoke(() => AddLog(s)); });
-        await Task.Delay(200);
-        PopulateDashboard();
         _ = CheckConnectivityAsync();
         _ = AnimatePulseAsync();  // 连通性脉冲
-        _detailLoaded[0] = true;
     }
 
     // ============================================================
@@ -258,12 +256,13 @@ public partial class Form1 : Form
     }
 
     // ============================================================
-    // 我的 IPv6 地址展示
+    // 我的 IPv6 地址展示（毛玻璃卡片 + 复制 + 入场动画）
     // ============================================================
     private async Task PopulateMyIPv6AddressesAsync()
     {
         try
         {
+            if (_data.Bindings.Count == 0) await _data.RefreshAllAsync();
             var myIPs = await _data.GetMyIPv6AddressesAsync();
             var gateways = await _data.GetDefaultGatewayAsync();
 
@@ -289,73 +288,105 @@ public partial class Form1 : Form
 
                 var card = new Panel
                 {
-                    Size = new Size(280, 64),
-                    BackColor = BG_CARD,
-                    Margin = new Padding(0, 2, 8, 2),
-                    Cursor = Cursors.Hand
+                    Size = new Size(300, 66),
+                    BackColor = Color.FromArgb(180, 28, 33, 40),
+                    Margin = new Padding(0, 2, 10, 2),
+                    Cursor = Cursors.Hand,
+                    Tag = a.IP
                 };
-                card.Paint += (s, e) => { using var pen = new Pen(CARD_BORDER); e.Graphics.DrawRectangle(pen, 0, 0, card.Width - 1, card.Height - 1); };
-
-                var typeBadge = new Label
+                card.Paint += (s, e) =>
                 {
-                    Text = a.Type,
-                    Location = new Point(10, 6),
-                    AutoSize = true,
-                    Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
-                    ForeColor = typeColor
+                    using Pen c = new Pen(Color.FromArgb(120, typeColor), 1);
+                    e.Graphics.DrawRectangle(c, 0, 0, 299, 65);
+                    using Pen left = new Pen(typeColor, 2);
+                    e.Graphics.DrawLine(left, 0, 0, 0, 66);
                 };
-                card.Controls.Add(typeBadge);
-
-                var ipLabel = new Label
-                {
-                    Text = a.IP.Truncate(42),
-                    Location = new Point(10, 22),
-                    AutoSize = true,
-                    Font = new Font("Consolas", 9F, FontStyle.Bold),
-                    ForeColor = TEXT_PRIMARY
-                };
-                card.Controls.Add(ipLabel);
-
-                var detailLabel = new Label
-                {
-                    Text = $"/{a.PrefixLen}  {a.Interface.Truncate(18)}  [{a.State}]",
-                    Location = new Point(10, 42),
-                    AutoSize = true,
-                    Font = new Font("Segoe UI", 7.5F),
-                    ForeColor = TEXT_SECONDARY
-                };
-                card.Controls.Add(detailLabel);
-
+                card.MouseEnter += (s, e) => card.BackColor = Color.FromArgb(220, 38, 44, 52);
+                card.MouseLeave += (s, e) => card.BackColor = Color.FromArgb(180, 28, 33, 40);
                 card.Click += (s, e) =>
                 {
                     Clipboard.SetText(a.IP);
-                    AddLog($"📋 已复制地址: {a.IP}");
+                    AddLog($"📋 已复制 IPv6: {a.IP}");
                 };
+
+                // 类型标签 + 复制提示
+                Panel topBar = new Panel { Height = 20, Dock = DockStyle.Top, BackColor = Color.Transparent };
+                topBar.Controls.Add(new Label { Text = a.Type, Location = new Point(10, 2), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = typeColor });
+                topBar.Controls.Add(new Label { Text = "\U0001f4cb", Location = new Point(265, 2), AutoSize = true, Font = new Font("Segoe UI", 9F), ForeColor = Color.FromArgb(120, 139, 148, 158) });
+                card.Controls.Add(topBar);
+
+                // IP 地址
+                card.Controls.Add(new Label { Text = a.IP, Location = new Point(10, 22), AutoSize = true, Font = new Font("Consolas", 10F, FontStyle.Bold), ForeColor = TEXT_PRIMARY });
+
+                // 前缀 + 接口 + 状态
+                card.Controls.Add(new Label
+                {
+                    Text = $"/{a.PrefixLen}  {a.Interface.Truncate(20)}  •  {a.State}",
+                    Location = new Point(10, 44),
+                    AutoSize = true,
+                    Font = new Font("Segoe UI", 7.5F),
+                    ForeColor = Color.FromArgb(160, 139, 148, 158)
+                });
 
                 myIPv6Container.Controls.Add(card);
                 added++;
             }
 
-            // 网关卡片
+            // 默认网关卡片
             foreach (var gw in gateways)
             {
-                var gwCard = new Panel
+                Panel gwCard = new Panel
                 {
-                    Size = new Size(240, 64),
-                    BackColor = BG_CARD,
-                    Margin = new Padding(0, 2, 8, 2)
+                    Size = new Size(260, 66),
+                    BackColor = Color.FromArgb(170, 28, 33, 40),
+                    Margin = new Padding(0, 2, 10, 2),
+                    Cursor = Cursors.Hand
                 };
-                gwCard.Paint += (s, e) => { using var pen = new Pen(CARD_BORDER); e.Graphics.DrawRectangle(pen, 0, 0, gwCard.Width - 1, gwCard.Height - 1); };
-                gwCard.Controls.Add(new Label { Text = "默认网关", Location = new Point(10, 6), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = ACCENT_ORANGE });
-                gwCard.Controls.Add(new Label { Text = gw.Gateway.Truncate(36), Location = new Point(10, 22), AutoSize = true, Font = new Font("Consolas", 9F, FontStyle.Bold), ForeColor = TEXT_PRIMARY });
-                gwCard.Controls.Add(new Label { Text = gw.Interface.Truncate(24), Location = new Point(10, 42), AutoSize = true, Font = new Font("Segoe UI", 7.5F), ForeColor = TEXT_SECONDARY });
+                gwCard.Paint += (s, e) =>
+                {
+                    using Pen c = new Pen(Color.FromArgb(120, ACCENT_ORANGE), 1);
+                    e.Graphics.DrawRectangle(c, 0, 0, 259, 65);
+                    using Pen left = new Pen(ACCENT_ORANGE, 2);
+                    e.Graphics.DrawLine(left, 0, 0, 0, 66);
+                };
+                gwCard.MouseEnter += (s, e) => gwCard.BackColor = Color.FromArgb(220, 38, 44, 52);
+                gwCard.MouseLeave += (s, e) => gwCard.BackColor = Color.FromArgb(170, 28, 33, 40);
                 gwCard.Click += (s, e) => { Clipboard.SetText(gw.Gateway); AddLog($"📋 已复制网关: {gw.Gateway}"); };
+
+                gwCard.Controls.Add(new Label { Text = "默认网关", Location = new Point(10, 4), AutoSize = true, Font = new Font("Segoe UI", 7.5F, FontStyle.Bold), ForeColor = ACCENT_ORANGE });
+                gwCard.Controls.Add(new Label { Text = gw.Gateway, Location = new Point(10, 22), AutoSize = true, Font = new Font("Consolas", 10F, FontStyle.Bold), ForeColor = TEXT_PRIMARY });
+                gwCard.Controls.Add(new Label { Text = gw.Interface.Truncate(24), Location = new Point(10, 44), AutoSize = true, Font = new Font("Segoe UI", 7.5F), ForeColor = Color.FromArgb(160, 139, 148, 158) });
+
                 myIPv6Container.Controls.Add(gwCard);
             }
 
+            // 空状态
             if (added == 0 && myIPv6Container.Controls.Count == 0)
             {
-                myIPv6Container.Controls.Add(new Label { Text = "  ⚠ 未检测到 IPv6 地址", AutoSize = true, Font = new Font("Segoe UI", 10F), ForeColor = TEXT_MUTED, Margin = new Padding(10, 10, 0, 0) });
+                myIPv6Container.Controls.Add(new Label
+                {
+                    Text = "  ⚠ 未检测到 IPv6 地址",
+                    AutoSize = true,
+                    Font = new Font("Segoe UI", 11F),
+                    ForeColor = TEXT_MUTED,
+                    Margin = new Padding(10, 10, 0, 0)
+                });
+            }
+
+            // 入场动画：卡片依次淡入滑上
+            int idx = 0;
+            foreach (Control c in myIPv6Container.Controls)
+            {
+                if (c is Panel p)
+                {
+                    int originTop = p.Top;
+                    p.Top += 15;
+                    int targetTop = originTop;
+                    int delay = idx * 40;
+                    int cur = idx;
+                    _ = AnimateSlide(p, originTop + 15, targetTop, delay);
+                    idx++;
+                }
             }
         }
         catch (Exception ex)
@@ -406,10 +437,18 @@ public partial class Form1 : Form
 
     private void AddMetric(string title, string val, Color c)
     {
-        var p = new Panel { Size = new Size(170, 90), BackColor = BG_CARD, Margin = new Padding(0, 8, 16, 0) };
-        p.Controls.Add(new Label { Text = title, Location = new Point(14, 10), AutoSize = true, Font = new Font("Segoe UI", 9F), ForeColor = TEXT_SECONDARY });
-        p.Controls.Add(new Label { Text = val, Location = new Point(12, 32), AutoSize = true, Font = new Font("Segoe UI", 26F, FontStyle.Bold), ForeColor = c });
-        p.Paint += (s, e) => { using var pen = new Pen(CARD_BORDER); e.Graphics.DrawRectangle(pen, 0, 0, p.Width - 1, p.Height - 1); };
+        Panel p = new Panel { Size = new Size(170, 88), BackColor = Color.FromArgb(180, 28, 33, 40), Margin = new Padding(0, 8, 16, 0) };
+        p.Controls.Add(new Label { Text = title, Location = new Point(14, 8), AutoSize = true, Font = new Font("Segoe UI", 8.5F), ForeColor = Color.FromArgb(180, 139, 148, 158) });
+        p.Controls.Add(new Label { Text = val, Location = new Point(12, 30), AutoSize = true, Font = new Font("Segoe UI", 26F, FontStyle.Bold), ForeColor = c });
+        p.Paint += (s, e) =>
+        {
+            using Pen border = new Pen(Color.FromArgb(60, c), 1);
+            e.Graphics.DrawRectangle(border, 0, 0, p.Width - 1, p.Height - 1);
+            using Pen top = new Pen(Color.FromArgb(30, 255, 255, 255));
+            e.Graphics.DrawLine(top, 2, 1, p.Width - 3, 1);
+        };
+        p.MouseEnter += (s, e) => p.BackColor = Color.FromArgb(210, 38, 44, 52);
+        p.MouseLeave += (s, e) => p.BackColor = Color.FromArgb(180, 28, 33, 40);
         dashCardContainer.Controls.Add(p);
     }
 

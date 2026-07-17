@@ -4,6 +4,7 @@
 
 #nullable disable
 
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace ipv6;
@@ -319,6 +320,24 @@ partial class Form1
         this.btnUpdate.TextAlign = ContentAlignment.MiddleCenter;
 
         this.contentPanel.BackColor = Color.FromArgb(13, 17, 23);
+        this.contentPanel.Paint += (s, e) =>
+        {
+            // 环境光晕：右上蓝色辉光
+            using var blueGlow = new System.Drawing.Drawing2D.GraphicsPath();
+            blueGlow.AddEllipse(contentPanel.Width - 300, -100, 400, 400);
+            using var blueBrush = new PathGradientBrush(blueGlow);
+            blueBrush.CenterColor = Color.FromArgb(20, 88, 166, 255);
+            blueBrush.SurroundColors = new[] { Color.FromArgb(0, 88, 166, 255) };
+            e.Graphics.FillEllipse(blueBrush, contentPanel.Width - 300, -100, 400, 400);
+
+            // 左下紫色光晕
+            using var purpleGlow = new System.Drawing.Drawing2D.GraphicsPath();
+            purpleGlow.AddEllipse(-100, contentPanel.Height - 250, 350, 350);
+            using var purpleBrush = new PathGradientBrush(purpleGlow);
+            purpleBrush.CenterColor = Color.FromArgb(15, 170, 120, 255);
+            purpleBrush.SurroundColors = new[] { Color.FromArgb(0, 170, 120, 255) };
+            e.Graphics.FillEllipse(purpleBrush, -100, contentPanel.Height - 250, 350, 350);
+        };
     }
 
     // ============================================================
