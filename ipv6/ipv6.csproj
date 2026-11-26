@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -7,6 +7,20 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <StartupObject>ipv6.Program</StartupObject>
+
+    <Version>2.2.0</Version>
+    <AssemblyVersion>2.2.0.0</AssemblyVersion>
+    <FileVersion>2.2.0.0</FileVersion>
+    <AssemblyTitle>IPv6 管理工具</AssemblyTitle>
+    <Product>IPv6 管理工具</Product>
+    <Description>Windows 平台 IPv6 网络配置管理、诊断与一键体检工具</Description>
+    <Copyright>Copyright © 2026 Bade-Gusi</Copyright>
+    <RepositoryUrl>https://github.com/Bade-Gusi/ipv6</RepositoryUrl>
+
+    <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>false</SelfContained>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
 </Project>
